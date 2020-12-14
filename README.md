@@ -2,7 +2,8 @@
 - npm init --yes
 - npm i express
 - npm i body-parser
-- npm install --save @okta/jwt-verifier
+- npm i cors
+- npm i @okta/jwt-verifier
 
 # Starting the Node server for the api
 - node server.js
