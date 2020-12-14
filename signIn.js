@@ -15,24 +15,29 @@ var signIn = new OktaSignIn({
 
     
 signIn.authClient.token.getUserInfo().then(function(user) {
-    debugger;
     // If we can get user info, it means we're already signed in
     document.getElementById("messageBox").innerHTML = "Hello, " + user.email + "! You are *still* logged in! :)";
     document.getElementById("logout").style.display = 'block';
 
     // We should also display the user's list
     var uid = user.sub;
-    
-    Http.open("GET", "http://localhost:3000/api/" + uid + "/list");
-    Http.send();
-    Http.onreadystatechange = () => {
-        if (Http.readyState == 4 && Http.status == 200){
-            populateList(JSON.parse(Http.response));
+    getList(uid);
+    /*
+    signIn.authClient.tokenManager.get('accessToken').then(function(token){
+        var tokeValue = token.value;
+        Http.open("GET", "http://localhost:3000/api/" + uid + "/list");
+        Http.setRequestHeader('Authorization', 'Bearer ' + tokeValue);
+        Http.send();
+        Http.onreadystatechange = () => {
+            if (Http.readyState == 4 && Http.status == 200){
+                populateList(JSON.parse(Http.response));
+            }
         }
-    }
+    });
+    */
+    
     
 }, function(error) {
-    debugger;
     // If we can't get user info, we're signed out, so show the login widget
     signIn.showSignInToGetTokens({
         el: '#widget-container'
@@ -51,13 +56,8 @@ signIn.authClient.token.getUserInfo().then(function(user) {
 
         // Get the user's list and populate it
         var uid = tokens.accessToken.claims.uid;
-        Http.open("GET", "http://localhost:3000/api/" + uid + "/list");
-        Http.send();
-        Http.onreadystatechange = () => {
-        if (Http.readyState == 4 && Http.status == 200){
-            populateList(JSON.parse(Http.response));
-        }
-    }
+        getList(uid);
+    
     }).catch(function(err) {
         console.error(err);
     });
@@ -126,8 +126,10 @@ function addTask(text){
     var params = {'item':text};
     signIn.authClient.tokenManager.get('accessToken').then(function(token){
         var uid = token.claims.uid;
+        var tokeValue = token.value;
         Http.open("POST", "http://localhost:3000/api/" + uid + "/list");
         Http.setRequestHeader("Content-Type", "application/json");
+        Http.setRequestHeader('Authorization', 'Bearer ' + tokeValue);
         Http.send(JSON.stringify(params));
     });
 };
@@ -137,8 +139,25 @@ function deleteTask(text){
     var params = {'item':text};
     signIn.authClient.tokenManager.get('accessToken').then(function(token){
         var uid = token.claims.uid;
+        var tokeValue = token.value;
         Http.open("DELETE", "http://localhost:3000/api/" + uid + "/list");
         Http.setRequestHeader("Content-Type", "application/json");
+        Http.setRequestHeader('Authorization', 'Bearer ' + tokeValue);
         Http.send(JSON.stringify(params));
     })
 };
+
+// Get list from server
+function getList(uid){
+    signIn.authClient.tokenManager.get('accessToken').then(function(token){
+        var tokeValue = token.value;
+        Http.open("GET", "http://localhost:3000/api/" + uid + "/list");
+        Http.setRequestHeader('Authorization', 'Bearer ' + tokeValue);
+        Http.send();
+        Http.onreadystatechange = () => {
+            if (Http.readyState == 4 && Http.status == 200){
+                populateList(JSON.parse(Http.response));
+            }
+        }
+    });
+}
